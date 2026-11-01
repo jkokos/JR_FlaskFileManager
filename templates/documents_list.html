@@ -1,0 +1,136 @@
+
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>DocBox — Документы</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<nav>
+    <a href="{{ url_for('index') }}">Загрузка</a>
+    <a href="{{ url_for('documents_list') }}">Список документов</a>
+    <form action="{{ url_for('documents_filter') }}" method="post">
+
+    <input type="text"
+           name="query"
+           placeholder="Поиск документа">
+
+    <button type="submit">Найти</button>
+
+</form>
+
+
+
+</nav>
+
+
+<div class="card">
+    <h1>Список загруженных документов</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Имя документа</th>
+                <th>Размер (KB)</th>
+                <th>Дата загрузки</th>
+                <th>Расширение</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for document in documents %}
+            <tr>
+                <td>{{ document.id }}</td>
+                <td>
+                    <a href="{{ url_for('serve_document', name=document.stored_name) }}">
+                        {{ document.original_name }}
+                    </a>
+                </td>
+                <td class="num">
+                    {{ "%.2f"|format(document.size_kb) }} KB
+                </td>
+                <td class="local-time"
+                    data-utc="{{ document.uploaded_at.isoformat() }}">
+                </td>
+                <td>{{ document.extension }}</td>
+                <td>
+                    <div class="document-actions">
+                        <a href="{{ url_for('view_document', file_id=document.id) }}"
+                           target="_blank"
+                           class="btn-open">
+                            Открыть
+                        </a>
+
+                        <form action="{{ url_for('delete_document', file_id=document.id) }}"
+                              method="POST">
+                            <button type="submit" class="btn-delete">
+                                Удалить
+                            </button>
+                        </form>
+                    </div>
+                </td>
+
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="empty">
+                    Документы не найдены
+                </td>
+            </tr>
+            {% endfor %}
+                </tbody>
+
+    </table>
+
+    <!-- ПАГИНАЦИЯ -->
+    {% if total_pages is defined and total_pages > 1 %}
+    <div class="pagination">
+
+        {% if page > 1 %}
+            <a href="{{ url_for('documents_list', page=page-1) }}">
+                ← Назад
+            </a>
+        {% endif %}
+
+        {% for p in range(1, total_pages + 1) %}
+            <a href="{{ url_for('documents_list', page=p) }}"
+               class="{% if p == page %}active{% endif %}">
+                {{ p }}
+            </a>
+        {% endfor %}
+
+        {% if page < total_pages %}
+            <a href="{{ url_for('documents_list', page=page+1) }}">
+                Вперёд →
+            </a>
+        {% endif %}
+
+    </div>
+    {% endif %}
+
+    {% if total is defined %}
+    <p class="pagination-info">
+        Всего документов: {{ total }}
+    </p>
+    {% endif %}
+
+</div>
+
+<script>
+
+<script>
+    document.querySelectorAll(".local-time").forEach(cell => {
+        const utcTime = cell.dataset.utc;
+        const date = new Date(utcTime);
+
+        cell.textContent = date.toLocaleString("ru-RU");
+    });
+</script>
+
+
+</body>
+</html>
